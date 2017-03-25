@@ -1,0 +1,5 @@
+3/25/17 5:28 A.M.
+Added a display error for when the user enters an incorrect filename. I tested a permission error with 'testy.txt', non-existing file with random strings, and a correct file with admiral.txt Also added in the panel and form extensions of ncurses. To compile and link this new one you have to add '-lform' and '-lpanel' to the linking and compliations part of the makefile, as well as the panel.h and form.h to the includes. The makefile I uploaded does so. 
+Waiting for an answer to the question on Piazza about forms for text editing. Forms would make scrolling, line wrapping, and newlining alot easier, since those are built-in options for forms. 
+I'll probably implement the opening read in the afternoon, and hopefully re-work the text editor into a form before Sunday Morning.
+-Matthew
