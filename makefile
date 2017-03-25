@@ -4,4 +4,4 @@ main.o: main.cpp
 	g++ -Wall -std=c++14 -g -O0 -pedantic-errors -lform -lpanel -lncurses -c main.cpp
 clean:
 	rm -f main.o
-	rm -f main.cpp
+	rm -f main
