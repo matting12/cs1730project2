@@ -3,3 +3,11 @@ Added a display error for when the user enters an incorrect filename. I tested a
 Waiting for an answer to the question on Piazza about forms for text editing. Forms would make scrolling, line wrapping, and newlining alot easier, since those are built-in options for forms. 
 I'll probably implement the opening read in the afternoon, and hopefully re-work the text editor into a form before Sunday Morning.
 -Matthew
+3/25/17 10:27 P.M.
+No reply on the piazza post about forms, so I went ahead and changed the text editor to forms. If we're allowed to use panels, a library bundled with ncurses, then I'd have
+a hard time seeing why we couldn't use the form library since it's bundled with ncurses. Plus some other students are using so we have safety on numbers.
+The text editor part of the project is essentially done, only it appears that you can't insert characters on certain words, 
+or at least the test file I used. You can space all the words or break them across a new line, or even delete them, but 
+strangely enough you can't insert characters into certain words, not until you've either spaced or deleted a part of them. I'll
+troubleshoot that later, but I've got the text editor where it scrolls, line-wraps, newlines, and tabs, etc. So aside of that
+one bug it's done. I also did the opening read from the file provided in the command-line argument. 

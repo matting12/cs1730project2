@@ -16,19 +16,8 @@
 #include <form.h>
 using namespace std;
 FIELD *field[1];
+FIELD * editorfield[1];
 
-void wrap(int &pos1, int &pos2, int cols){
-  if(pos2 >= cols){
-    pos1++;
-    pos2 = 1;
-  }
-}
-void wrapback(int &pos1, int &pos2, int cols){
-  if(pos2 <= 0){
-    pos1--;
-    pos2 = cols;
-  }
-}
 /* https://gist.github.com/alan-mushi/c8a6f34d1df18574f643 *
    Ncurses is weird and fills the content in the field with leading and trailing spaces. This method from github deletes the extra spaces. */
 static char* trim_whitespaces(char *str)
@@ -65,17 +54,11 @@ char *  displayerror(WINDOW * editorwin, WINDOW * errorwin, char * message, int 
 
   field[0] = new_field(1, ecols-5, 0, 0, 0, 0);
   FORM * aform = new_form(field);
-  int displayrows, displaycols;
-  getmaxyx(errorwin, displayrows, displaycols);
-  //scale_form(aform, &displayrows, &displaycols);
-  //WINDOW *frmwin = newwin(rows -8, cols -8, 5, 5);
-  //mvwaddstr(frmwin, 1, 1, "Re-Enter Filename");
-  //keypad(frmwin, TRUE);
   set_form_win(aform, errorwin);
-  WINDOW * fieldwin = derwin(errorwin, 4,ecols-3,3,3);
+  WINDOW * fieldwin = derwin(errorwin, 4,ecols-5,3,3);
   set_form_sub(aform, fieldwin);
   post_form(aform);
-  wrefresh(editorwin); 
+  wrefresh(errorwin); 
   //update_panels();
   //doupdate();
   noecho();
@@ -96,13 +79,35 @@ char *  displayerror(WINDOW * editorwin, WINDOW * errorwin, char * message, int 
       form_driver(aform, REQ_CLR_FIELD);
     }
   }
+  close(fd);
   unpost_form(aform);
-  free_form(aform);
   free_field(field[0]);
+  free_form(aform);
   delwin(fieldwin);
   delwin(errorwin); 
   return filename;
 }
+char * getcontents(int fd, WINDOW * editorwin, WINDOW * errorwin, char * message, int rows, int cols){
+  char * buffer = 0;
+  off_t filesize = lseek(fd, 0, SEEK_END);
+  if(filesize == -1){
+    char * newfilename = displayerror(editorwin, errorwin, (strerror(errno)), rows, cols);
+    open(newfilename, O_RDWR);
+    filesize = lseek(fd, 0, SEEK_END);
+  }
+  int seekback = lseek(fd, 0, SEEK_SET);
+  if(seekback == -1){
+    char * newfilename = displayerror(editorwin, errorwin, (strerror(errno)), rows, cols);
+    open(newfilename, O_RDWR);
+    seekback = lseek(fd, 0, SEEK_SET);
+  }
+
+  buffer = (char*)malloc(filesize+1);
+  buffer[filesize] = '\0';
+  read(fd, buffer, filesize);
+  return buffer;
+}
+
 int main(const int argc, const char * argv []) {
   initscr();
   int screenrows, screencols;
@@ -119,89 +124,69 @@ I set the maximum height of boxwin to be the height of the main window (rows) I 
   getmaxyx(editorwin,rows, cols); 
   mvprintw(0,0,"F1: Menu");
   mvprintw(0,cols/2,"CSCI 1730 Text Editor"); //cols/2 puts the heading in the center
-  wborder(boxwin, '|', '|', '-', '-', '|', '|', '|', '|'); //this simply puts a border around boxwin, so that the text editor looks like Mike's in the pdf.
-  //mvwprintw(editorwin, 1,1, "Testing");
-  int pos1, pos2;
-  getyx(editorwin, pos1, pos2);
+  wborder(boxwin, '|', '|', '-', '-', '|', '|', '|', '|'); //this simply puts a border around boxwin, so that the text editor looks like Mike's in the pdf
   if(argc == 2){
     mvprintw(screenrows-2,0, argv[1]);
   } else {
     mvprintw(screenrows-2,0, "Untitled.txt"); //might change to the displayerror method
   }
   int fd = open(argv[1], O_RDWR);
+  WINDOW * errorwin = newwin((rows-2), (cols-2),5,5);
+  char * newfilename;
   if(fd == -1){
-    WINDOW *  errorwin = newwin((rows-2), (cols-2),5,5);
-    char * newfilename = displayerror(editorwin, errorwin, (strerror(errno)), rows, cols); // will continously prompt the user until a correct username.
+    newfilename = displayerror(editorwin, errorwin, (strerror(errno)), rows, cols); // will continously prompt the user until a correct username.
     mvprintw(screenrows-2, 0, newfilename);
     delwin(errorwin);
   }
+  fd = open(newfilename, O_RDWR);
+  mvprintw(screenrows-2,0, argv[1]);
+  wmove(editorwin, 1, 1);
+  editorfield[0] = new_field(rows-1, cols-5, 0,0,0,0);
+  field_opts_off(editorfield[0], O_STATIC);
+  field_opts_off(editorfield[0], O_BLANK);
+  field_opts_on(editorfield[0], O_ACTIVE);
+  FORM * editorform = new_form(editorfield);
+  set_form_win(editorform, editorwin);
+  WINDOW * fieldwin = derwin(editorwin, rows-1, cols-5, 1,1);
+  set_form_sub(editorform, fieldwin);
+  char * content = getcontents(fd, editorwin, errorwin, (strerror(errno)), rows, cols);
+  set_field_buffer(editorfield[0], 0, content); 
+  post_form(editorform);
+  wrefresh(editorwin);
   refresh();
-  scrollok(editorwin, TRUE);
   keypad(editorwin, TRUE);
   idcok(editorwin, TRUE);
   noecho();
   int input;
   /*Feel free to switch the following into a switch statement*/
-  while((input = wgetch(editorwin))){ //I set tilda to stop the programming just for personal debugging, the final version won't have this.
+  while((input = wgetch(editorwin))){ 
     if(input == KEY_UP){
-      pos1--;
-      wmove(editorwin, pos1, pos2);
+      form_driver(editorform, REQ_UP_CHAR);
     }
     if(input == KEY_DOWN){
-      pos1++;
-      wmove(editorwin, pos1, pos2);
+      form_driver(editorform,REQ_DOWN_CHAR);
     }
     if(input == KEY_RIGHT){
-      pos2++;
-      wrap(pos1, pos2, cols);
-      wmove(editorwin, pos1, pos2);
+      form_driver(editorform,REQ_RIGHT_CHAR);
     }
     if(input == KEY_LEFT){
-      pos2--;
-      wrapback(pos1, pos2, cols);
-      wmove(editorwin, pos1, pos2);
+      form_driver(editorform,REQ_LEFT_CHAR);
     }
     if(input == KEY_BACKSPACE){
-      pos2--;
-      wrapback(pos1, pos2, cols);
-      mvwdelch(editorwin, pos1, pos2);
+      form_driver(editorform, REQ_DEL_PREV);
     }
     if(input == 10){
-      char * restofline = (char *)malloc((cols+1)); //the char * pointer has to be allocated first before data can read into.
-      memset(restofline, '\n', cols+1);
-      winstr(editorwin, restofline);
-      pos1++;
-      wmove(editorwin, pos1, pos2);
-      waddstr(editorwin,restofline);
-      wmove(editorwin, pos1, pos2);
-      for(unsigned int i = 0; i <= strlen(restofline); i++){
-	mvwdelch(editorwin, pos1-1, (pos2));
-      }
-      //mvwinsch(editorwin,pos1,pos2, input);
-      wmove(editorwin, pos1, pos2);
-      free(restofline);
+      form_driver(editorform, REQ_NEW_LINE);
     }
     if(input == 9){
-      // char * restofline = (char *)malloc((cols+1)); //the char * pointer has to be allocated first before data can read into.
-      // memset(restofline, 0, cols+1);
-      //winstr(editorwin, restofline);
-      //pos2 += 6;
-      //wrap(pos1, pos2, cols);
-      mvwinsch(editorwin, pos1, pos2, input);
-      //wmove(editorwin, pos1, pos2);
-      //pos2 += 6;
-      //wmove(editorwin, pos1, pos2);1
-      /*for(unsigned int i = 0; i <= strlen(restofline); i++){
-	pos2 -= 6;
-	mvwdelch(editorwin, pos1, pos2);
-	}*/
+      int space = 0;
+      while(space < 6){
+	form_driver(editorform, REQ_INS_CHAR);
+	space++;
+      }
     }
     if(input < 0401 && (input != 10 && input != 9)){ // 0401 is the starting octal values of special keys; anything less than this is normal characters like 'a' or 'f' and '!
-      wrap(pos1, pos2, cols);
-      mvwinsch(editorwin, pos1, pos2, input);
-      //char * saveme =  textwrap(pos1, pos2, cols, editorwin);
-      //mvwinsstr(editorwin, pos1, pos2, saveme);
-      pos2++;
+      form_driver(editorform, input);
     }
   }
   endwin();
