@@ -137,8 +137,8 @@ I set the maximum height of boxwin to be the height of the main window (rows) I 
     newfilename = displayerror(editorwin, errorwin, (strerror(errno)), rows, cols); // will continously prompt the user until a correct username.
     mvprintw(screenrows-2, 0, newfilename);
     delwin(errorwin);
+    fd = open(newfilename, O_RDWR);
   }
-  fd = open(newfilename, O_RDWR);
   mvprintw(screenrows-2,0, argv[1]);
   wmove(editorwin, 1, 1);
   editorfield[0] = new_field(rows-1, cols-5, 0,0,0,0);

@@ -18,19 +18,6 @@ using namespace std;
 FIELD *field[1];
 FIELD * editorfield[1];
 
-
-void wrap(int &pos1, int &pos2, int cols){
-  if(pos2 >= cols){
-    pos1++;
-    pos2 = 1;
-  }
-}
-void wrapback(int &pos1, int &pos2, int cols){
-  if(pos2 <= 0){
-    pos1--;
-    pos2 = cols;
-  }
-}
 /* https://gist.github.com/alan-mushi/c8a6f34d1df18574f643 *
    Ncurses is weird and fills the content in the field with leading and trailing spaces. This method from github deletes the extra spaces. */
 static char* trim_whitespaces(char *str)
@@ -138,8 +125,6 @@ I set the maximum height of boxwin to be the height of the main window (rows) I 
   mvprintw(0,0,"F1: Menu");
   mvprintw(0,cols/2,"CSCI 1730 Text Editor"); //cols/2 puts the heading in the center
   wborder(boxwin, '|', '|', '-', '-', '|', '|', '|', '|'); //this simply puts a border around boxwin, so that the text editor looks like Mike's in the pdf
-  int pos1, pos2;
-  getyx(editorwin, pos1, pos2);
   if(argc == 2){
     mvprintw(screenrows-2,0, argv[1]);
   } else {
@@ -152,8 +137,8 @@ I set the maximum height of boxwin to be the height of the main window (rows) I 
     newfilename = displayerror(editorwin, errorwin, (strerror(errno)), rows, cols); // will continously prompt the user until a correct username.
     mvprintw(screenrows-2, 0, newfilename);
     delwin(errorwin);
+    fd = open(newfilename, O_RDWR);
   }
-  fd = open(newfilename, O_RDWR);
   mvprintw(screenrows-2,0, argv[1]);
   wmove(editorwin, 1, 1);
   editorfield[0] = new_field(rows-1, cols-5, 0,0,0,0);
@@ -174,71 +159,37 @@ I set the maximum height of boxwin to be the height of the main window (rows) I 
   noecho();
   int input;
   /*Feel free to switch the following into a switch statement*/
-  while((input = wgetch(editorwin))){ //I set tilda to stop the programming just for personal debugging, the final version won't have this.
+  while((input = wgetch(editorwin))){ 
     if(input == KEY_UP){
-      pos1--;
       form_driver(editorform, REQ_UP_CHAR);
     }
     if(input == KEY_DOWN){
-      pos1++;
       form_driver(editorform,REQ_DOWN_CHAR);
     }
     if(input == KEY_RIGHT){
-      pos2++;
       form_driver(editorform,REQ_RIGHT_CHAR);
     }
     if(input == KEY_LEFT){
-      pos2--;
       form_driver(editorform,REQ_LEFT_CHAR);
     }
     if(input == KEY_BACKSPACE){
-      pos2--;
       form_driver(editorform, REQ_DEL_PREV);
     }
     if(input == 10){
-      /*char * restofline = (char *)malloc((cols+1)); //the char * pointer has to be allocated first before data can read into.
-      memset(restofline, '\n', cols+1);
-      winstr(editorwin, restofline);
-      pos1++;
-      wmove(editorwin, pos1, pos2);
-      waddstr(editorwin,restofline);
-      wmove(editorwin, pos1, pos2);
-      for(unsigned int i = 0; i <= strlen(restofline); i++){
-	mvwdelch(editorwin, pos1-1, (pos2));
-      }
-      //mvwinsch(editorwin,pos1,pos2, input);
-      wmove(editorwin, pos1, pos2);
-      free(restofline);*/
       form_driver(editorform, REQ_NEW_LINE);
     }
     if(input == 9){
-      // char * restofline = (char *)malloc((cols+1)); //the char * pointer has to be allocated first before data can read into.
-      // memset(restofline, 0, cols+1);
-      //winstr(editorwin, restofline);
-      //pos2 += 6;
-      //wrap(pos1, pos2, cols);
-      //mvwinsch(editorwin, pos1, pos2, input);
       int space = 0;
       while(space < 6){
 	form_driver(editorform, REQ_INS_CHAR);
 	space++;
       }
-      //wmove(editorwin, pos1, pos2);
-      //pos2 += 6;
-      //wmove(editorwin, pos1, pos2);1
-      /*for(unsigned int i = 0; i <= strlen(restofline); i++){
-	pos2 -= 6;
-	mvwdelch(editorwin, pos1, pos2);
-	}*/
     }
     if(input < 0401 && (input != 10 && input != 9)){ // 0401 is the starting octal values of special keys; anything less than this is normal characters like 'a' or 'f' and '!
-      form_driver(editorform, input);
-      pos2++;
+      form_driver(editorform, REQ_INS_CHAR);
+      //form_driver(editorform, input);
     }
   }
-  /*unpost_form(editorform);
-  free_field(editorfield[0]);
-  free_form(editorform);*/
   endwin();
   return 0;
 }
