@@ -158,33 +158,37 @@ I set the maximum height of boxwin to be the height of the main window (rows) I 
   idcok(editorwin, TRUE);
   noecho();
   int input;
-  /*Feel free to switch the following into a switch statement*/
+ 
   while((input = wgetch(editorwin))){ 
-    if(input == KEY_UP){
-      form_driver(editorform, REQ_UP_CHAR);
-    }
-    if(input == KEY_DOWN){
-      form_driver(editorform,REQ_DOWN_CHAR);
-    }
-    if(input == KEY_RIGHT){
-      form_driver(editorform,REQ_RIGHT_CHAR);
-    }
-    if(input == KEY_LEFT){
-      form_driver(editorform,REQ_LEFT_CHAR);
-    }
-    if(input == KEY_BACKSPACE){
-      form_driver(editorform, REQ_DEL_PREV);
-    }
-    if(input == 10){
-      form_driver(editorform, REQ_NEW_LINE);
-    }
-    if(input == 9){
-      int space = 0;
-      while(space < 6){
-	form_driver(editorform, REQ_INS_CHAR);
-	space++;
-      }
-    }
+   //switch statement
+	  switch(input){
+			  
+	case KEY_UP:
+      	form_driver(editorform, REQ_UP_CHAR);
+    	break;
+    	case KEY_DOWN:
+      	form_driver(editorform,REQ_DOWN_CHAR);
+    	break;
+ 	case KEY_RIGHT:
+      	form_driver(editorform,REQ_RIGHT_CHAR);
+    	break;
+	case KEY_LEFT:
+      	form_driver(editorform,REQ_LEFT_CHAR);
+    	break;
+	case KEY_BACKSPACE:
+      	form_driver(editorform, REQ_DEL_PREV);
+    	break;
+	case 10:
+      	form_driver(editorform, REQ_NEW_LINE);
+    	break;
+	case 9:
+      	int space = 0;
+      	while(space < 6){
+		form_driver(editorform, REQ_INS_CHAR);
+		space++;
+      	}
+    	break;
+	  }
     if(input < 0401 && (input != 10 && input != 9)){ // 0401 is the starting octal values of special keys; anything less than this is normal characters like 'a' or 'f' and '!
       form_driver(editorform, input);
     }
