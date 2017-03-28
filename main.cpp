@@ -26,6 +26,8 @@ static char* trim_whitespaces(char *str);
 /* Takes the error window and makes it into a form window; the message is the errno message from the open system call in main. Rows and cols variables are for resizing and scaling. This method will loop until a user enters a proper filename. Deletes itself and frees memory when the user name is correct. I tried to design this method to work with other system calls, so try it out with the write and read commands. */
 char *  displayerror(WINDOW * editorwin, WINDOW * errorwin, char * message, int rows, int cols);
 
+void f1Menu();
+
 char * getcontents(int fd, WINDOW * editorwin, WINDOW * errorwin, char * message, int rows, int cols);
 
 int main(const int argc, const char * argv []) {
@@ -98,6 +100,9 @@ I set the maximum height of boxwin to be the height of the main window (rows) I 
 	case KEY_BACKSPACE:
       	form_driver(editorform, REQ_DEL_PREV);
     	break;
+	case KEY_F(1):
+      	f1Menu();
+      	break;
 	case 10:
       	form_driver(editorform, REQ_NEW_LINE);
     	break;
