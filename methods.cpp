@@ -136,7 +136,7 @@ void f1Menu(){
   noecho(); // disable echoing of characters on the screen                      
   keypad( w, TRUE ); // enable keyboard input for the window.                   
   curs_set( 0 ); // hide the default screen cursor.    
-    curs_set( 0 ); // hide the default screen cursor.                             
+
 
   // get the input                                                              
   while(( ch = wgetch(w)) != 'q'){
