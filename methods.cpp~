@@ -46,13 +46,14 @@ ame. Deletes itself and frees memory when the user name is correct. I tried to
 design this method to work with other system calls, so try it out with the write and read commands. */
 
 char *  displayerror(WINDOW * editorwin, WINDOW * errorwin, char * message, int rows, int cols){
-            
+  // WINDOW *  errorwin = derwin(editorwin, (rows-2), (cols-2),1,1);            
   int erows, ecols;
   getmaxyx(errorwin, erows, ecols);
   erows = erows/2;
   wborder(errorwin, '|', '|', '-', '-', '|', '|', '|', '|');
   mvwaddstr(errorwin, 2, 1, message);
-  mvwaddstr(errorwin, 1, ecols/2, "Re-Enter Filename");                                  
+  mvwaddstr(errorwin, 1, ecols/2, "Re-Enter Filename");
+  // PANEL * errorpanel = new_panel(errorwin);                                  
 
   field[0] = new_field(1, ecols-5, 0, 0, 0, 0);
   FORM * aform = new_form(field);
@@ -61,9 +62,9 @@ char *  displayerror(WINDOW * editorwin, WINDOW * errorwin, char * message, int 
   set_form_sub(aform, fieldwin);
   post_form(aform);
   wrefresh(errorwin);
-                                                       
+  // update_panels();                                                           
+  // doupdate();                                                                
   noecho();
-  keypad(errorwin, TRUE);
   int ch;
   int fd = -1;
   char * filename;
